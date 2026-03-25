@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Cliente } from '../entities/cliente.entity';
+
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -13,6 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-  return { ClienteId: payload.sub, email: payload.email };
-}
+    // 'sub' é o ID do usuário guardado no token
+    return { userId: payload.sub, email: payload.email };
+  }
 }

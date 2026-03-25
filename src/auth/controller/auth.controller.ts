@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Req } from '@nestjs/common';
 import { LocalAuthGuard } from '../guard/local-auth.guard';
 import { AuthService } from '../services/auth.service';
 import { UserLogin } from './../entities/userlogin.entity';
@@ -12,8 +12,8 @@ export class AuthController {
     @UseGuards(LocalAuthGuard)
     @HttpCode(HttpStatus.OK)
     @Post('/logar')
-    login(@Body() usuario: UserLogin): Promise<any> {
-        return this.authService.login(usuario);
+    // O Passport coloca o usuário validado em req.user
+    async login(@Req() req: any): Promise<any> {
+        return this.authService.login(req.user);
     }
-
 }

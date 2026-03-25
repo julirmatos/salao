@@ -1,35 +1,35 @@
-import { Injectable } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cliente } from '../entities/cliente.entity';
 import { Repository } from 'typeorm';
-
+import { Bcrypt } from '../../auth/bcrypt/bcrypt';
 @Injectable()
 export class ClientesService {
   constructor(
     @InjectRepository(Cliente)
     private clienteRepository: Repository<Cliente>,
+    private bcrypt: Bcrypt // Injetado para proteger a senha no cadastro
   ) {}
 
-  // CREATE
-  async create(cliente: Cliente) {
-    return this.clienteRepository.save(cliente);
-  }
+  async create(cliente: Cliente): Promise<Cliente> {
+    // Verifique no seu arquivo bcrypt.ts se o nome é 'criptografarSenha'
+    cliente.senha = await this.bcrypt.criptografarSenha(cliente.senha); 
+    return await this.clienteRepository.save(cliente);
+}
 
-  // READ ALL
-  async findAll() {
-    return this.clienteRepository.find();
-  }
+  // Método essencial para o funcionamento do AuthService.validateUser
+  async findByEmail(email: string): Promise<Cliente | null> { 
+    return await this.clienteRepository.findOneBy({ email });
+}
 
-  // READ ONE
   async findOne(id: number) {
     const cliente = await this.clienteRepository.findOneBy({ id });
-
-    if (!cliente) {
-      throw new NotFoundException('Cliente não encontrado');
-    }
-
+    if (!cliente) throw new NotFoundException('Cliente não encontrado');
     return cliente;
+  }
+
+  async findAll(): Promise<Cliente[]> {
+    return await this.clienteRepository.find();
   }
 
   // UPDATE
