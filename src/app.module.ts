@@ -17,7 +17,7 @@ import { AuthModule } from './auth/auth.module';
       database: 'db_salao',
       entities: [Cliente],
       synchronize: true,
-      }),
+}),
     AuthModule,ClientesModule],
     controllers: [],
   providers: [],

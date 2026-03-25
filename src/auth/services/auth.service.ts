@@ -1,16 +1,15 @@
 import { JwtService } from '@nestjs/jwt';
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { Bcrypt } from '../bcrypt/bcrypt';
 import { UserLogin } from '../entities/userlogin.entity';
 import { ClientesService } from '../../clientes/services/clientes.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
     constructor(
         private userService: ClientesService, 
         private jwtService: JwtService,
-        private bcrypt: Bcrypt
-    ) { }
+    ) {}
 
     async validateUser(username: string, password: string): Promise<any> {
         
@@ -18,17 +17,18 @@ export class AuthService {
 
         if (!buscaUsuario) return null;
 
-        const matchPassword = await this.bcrypt.compararSenhas(password, buscaUsuario.senha);
+        // 🔥 CORREÇÃO AQUI
+        const matchPassword = await bcrypt.compare(password, buscaUsuario.senha);
 
         if (matchPassword) {
             const { senha, ...resposta } = buscaUsuario;
             return resposta;
         }
+
         return null;
     }
 
     async login(user: any) {
-        // O payload deve usar o ID real do objeto retornado pelo validateUser
         const payload = { 
             username: user.usuario || user.email, 
             sub: user.id 
