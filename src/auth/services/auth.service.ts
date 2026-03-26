@@ -1,45 +1,50 @@
 import { JwtService } from '@nestjs/jwt';
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { UserLogin } from '../entities/userlogin.entity';
-import { ClientesService } from '../../clientes/services/clientes.service';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { UsuariosService } from '../../usuarios/services/usuarios.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+
     constructor(
-        private userService: ClientesService, 
+        private usuariosService: UsuariosService,
         private jwtService: JwtService,
     ) {}
 
-    async validateUser(username: string, password: string): Promise<any> {
+    async validateUser(email: string, senha: string): Promise<any> {
         
-        const buscaUsuario = await this.userService.findByEmail(username); 
+        const usuario = await this.usuariosService.findByEmail(email);
 
-        if (!buscaUsuario) return null;
-
-        // 🔥 CORREÇÃO AQUI
-        const matchPassword = await bcrypt.compare(password, buscaUsuario.senha);
-
-        if (matchPassword) {
-            const { senha, ...resposta } = buscaUsuario;
-            return resposta;
+        if (!usuario) {
+            throw new UnauthorizedException('Credenciais inválidas');
         }
 
-        return null;
+        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+
+        if (!senhaValida) {
+            throw new UnauthorizedException('Credenciais inválidas');
+        }
+
+        // remove senha antes de retornar
+        const { senha: _, ...usuarioSemSenha } = usuario;
+
+        return usuarioSemSenha;
     }
 
     async login(user: any) {
+
         const payload = { 
-            username: user.usuario || user.email, 
-            sub: user.id 
+            sub: user.id,
+            email: user.email,
+            role: user.role
         };
 
         return {
             id: user.id,
             nome: user.nome,
-            usuario: user.usuario || user.email,
-            foto: user.foto,
-            token: `Bearer ${this.jwtService.sign(payload)}`,
+            email: user.email,
+            role: user.role,
+            access_token: this.jwtService.sign(payload)
         };
     }
 }

@@ -1,5 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Usuario } from '../../usuarios/entities/usuarios.entity';
 
 @Entity('clientes')
 export class Cliente {
@@ -7,11 +7,22 @@ export class Cliente {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  // 🔗 relacionamento com usuario (dono da relação)
+  @OneToOne(() => Usuario, usuario => usuario.cliente, { cascade: true })
+  @JoinColumn()
+  usuario!: Usuario;
+
   @Column({ length: 100 })
   nome!: string;
- 
+
+  @Column({ length: 20 })
+  telefone!: string;
+
   @Column({ type: 'date', nullable: true })
   dataNascimento?: Date;
+
+  @Column({ length: 11, unique: true })
+  cpf!: string;
 
   @Column({ length: 9, nullable: true })
   cep?: string;
@@ -33,29 +44,11 @@ export class Cliente {
 
   @Column({ length: 2, nullable: true })
   estado?: string;
-  
-  @Column({ length: 20 })
-  telefone!: string;
-
-  @Column({ length: 100, unique: true })
-  email!: string;
-
-  @Column({ length: 11, unique: true })
-  cpf!: string;
-
-  @Column()
-  senha!: string;
 
   @Column({ nullable: true })
   observacoes?: string;
 
-  // 📸 caminho da foto (upload local)
+  // 📸 caminho da foto
   @Column({ nullable: true })
   foto?: string;
-
-  // 🔐 criptografia da senha
-  @BeforeInsert()
-  async hashSenha() {
-    this.senha = await bcrypt.hash(this.senha, 10);
-  }
 }

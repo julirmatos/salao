@@ -14,7 +14,7 @@ async function bootstrap() {
     .build();
     
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('app-salao', app, document);
 
   
   process.env.TZ = '-03:00';

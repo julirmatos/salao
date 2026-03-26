@@ -12,52 +12,57 @@ import {
   HttpStatus, 
   HttpCode 
 } from '@nestjs/common';
+
 import { ClientesService } from '../services/clientes.service';
 import { Cliente } from '../entities/cliente.entity';
 import { JwtAuthGuard } from '../../auth/guard/jwt-auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CreateClienteDto } from '../dto/create-cliente.dto';
+import { UpdateClienteDto } from '../dto/update-cliente.dto';
 
-@ApiTags('Clientes') // Organiza os endpoints no Swagger
+@ApiTags('Clientes')
 @Controller('clientes')
 export class ClientesController {
+
   constructor(private readonly clientesService: ClientesService) {}
 
+  // 🔐 Perfil do cliente logado
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('perfil')
   async getMe(@Req() req: any) {
-    // O userId vem do payload do Token validado no JwtStrategy
-    const cliente = await this.clientesService.findOne(req.user.userId);
-    // Remove a senha do retorno por segurança
-    const { senha, ...resultado } = cliente;
-    return resultado;
+
+    return this.clientesService.findByUsuarioId(req.user.sub);
   }
 
+  // ➕ Criar cliente (cria usuario + cliente)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() cliente: Cliente) {
-    return this.clientesService.create(cliente);
-  }
-
+  create(@Body() data: CreateClienteDto) {
+  return this.clientesService.create(data);
+}
+  // 📋 Listar todos
   @Get()
   @HttpCode(HttpStatus.OK)
   findAll() {
     return this.clientesService.findAll();
   }
 
+  // 🔍 Buscar por ID
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  // Usamos ParseIntPipe para converter o ID da URL de string para number automaticamente
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.clientesService.findOne(id);
   }
 
-  @Put(':id')
-  @HttpCode(HttpStatus.OK)
-  update(@Param('id', ParseIntPipe) id: number, @Body() dados: Partial<Cliente>) {
-    return this.clientesService.update(id, dados);
-  }
+  // ✏️ Atualizar
+  @Put('perfil')
+@UseGuards(JwtAuthGuard)
+updatePerfil(@Req() req, @Body() data: UpdateClienteDto) {
+  return this.clientesService.update(req.user.sub, data);
+}
 
+  // ❌ Remover
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number) {
