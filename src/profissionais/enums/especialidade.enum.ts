@@ -1,0 +1,15 @@
+export enum Especialidade {
+  HAIR_STYLIST = 'hair_stylist',
+  COLORISTA = 'colorista',
+  MANICURE = 'manicure',
+  PEDICURE = 'pedicure',
+  NAIL_DESIGNER = 'nail_designer',
+  ESTETICISTA = 'esteticista',
+  DESIGN_SOBRANCELHA = 'design_sobrancelha',
+  MICROPIGMENTADORA = 'micropigmentador',
+  LASH_DESIGNER = 'extensao_cilios',
+  DEPILADORA = 'depilacao',
+  MASSOTERAPEUTA = 'massoterapeuta',
+  MAQUIADORA = 'maquiador',
+  TRANCISTA = 'trancista', 
+}

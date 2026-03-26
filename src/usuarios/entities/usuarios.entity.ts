@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
 import { Cliente } from '../../clientes/entities/cliente.entity';
-
+import { Profissional } from '../../profissionais/entities/profissionais.entity';
 @Entity('usuarios')
 export class Usuario {
 
@@ -19,4 +19,6 @@ export class Usuario {
   // 🔗 relacionamento com cliente
   @OneToOne(() => Cliente, cliente => cliente.usuario)
   cliente!: Cliente;
+  @OneToOne(() => Profissional, profissional => profissional.usuario)
+profissional!: Profissional;
 }

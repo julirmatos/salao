@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientesModule } from './clientes/clientes.module';
 import { AuthModule } from './auth/auth.module';
+import { ProfissionaisModule } from './profissionais/profissionais.module';
 
 
 
@@ -17,7 +18,7 @@ import { AuthModule } from './auth/auth.module';
       autoLoadEntities: true,
       synchronize: true,
             }),
-    AuthModule,ClientesModule],
+    AuthModule,ClientesModule,ProfissionaisModule],
     controllers: [],
   providers: [],
   })
