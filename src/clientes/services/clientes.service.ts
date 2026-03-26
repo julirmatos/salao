@@ -5,6 +5,7 @@ import { Usuario } from '../../usuarios/entities/usuarios.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateClienteDto } from '../dto/create-cliente.dto';
+import { Role } from '../../usuarios/enums/role.enum';
 
 @Injectable()
 export class ClientesService {
@@ -20,6 +21,11 @@ export class ClientesService {
   // ➕ CREATE (Cliente + Usuario)
   async create(data: CreateClienteDto): Promise<Cliente> {
 
+    // 🔒 validação básica
+    if (!data.email || !data.senha || !data.nome) {
+      throw new BadRequestException('Dados obrigatórios não informados');
+    }
+
     // 🔍 verifica se email já existe
     const usuarioExistente = await this.usuarioRepository.findOne({
       where: { email: data.email }
@@ -29,11 +35,22 @@ export class ClientesService {
       throw new BadRequestException('Email já cadastrado');
     }
 
-    // 🔐 cria usuário (somente autenticação)
+    // 🔍 verifica se CPF já existe
+    const clienteExistente = await this.clienteRepository.findOne({
+      where: { cpf: data.cpf }
+    });
+
+    if (clienteExistente) {
+      throw new BadRequestException('CPF já cadastrado');
+    }
+
+    // 🔐 cria usuário (SEMPRE CLIENTE - NÃO VEM DO FRONT)
     const usuario = this.usuarioRepository.create({
       email: data.email,
       senha: await bcrypt.hash(data.senha, 10),
-      role: 'cliente'
+
+      // 🔥 REGRA DE SEGURANÇA
+      role: Role.CLIENTE
     });
 
     const usuarioSalvo = await this.usuarioRepository.save(usuario);

@@ -5,6 +5,7 @@ import { Usuario } from '../../usuarios/entities/usuarios.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateProfissionalDto } from '../dto/create-profissional.dto';
+import { Role } from '../../usuarios/enums/role.enum';
 
 @Injectable()
 export class ProfissionaisService {
@@ -19,7 +20,12 @@ export class ProfissionaisService {
 
   async create(data: CreateProfissionalDto): Promise<Profissional> {
 
-    // verifica email
+    // 🔒 validação básica
+    if (!data.email || !data.senha || !data.nome) {
+      throw new BadRequestException('Dados obrigatórios não informados');
+    }
+
+    // 🔍 verifica se email já existe
     const existe = await this.usuarioRepository.findOne({
       where: { email: data.email }
     });
@@ -28,16 +34,18 @@ export class ProfissionaisService {
       throw new BadRequestException('Email já cadastrado');
     }
 
-    // cria usuário
+    // 🔐 cria usuário (ROLE FORÇADO)
     const usuario = this.usuarioRepository.create({
       email: data.email,
       senha: await bcrypt.hash(data.senha, 10),
-      role: 'profissional'
+
+      // 🔥 SEGURANÇA TOTAL
+      role: Role.PROFISSIONAL
     });
 
     const usuarioSalvo = await this.usuarioRepository.save(usuario);
 
-    // cria profissional
+    // 👨‍🔧 cria profissional
     const profissional = this.profissionalRepository.create({
       nome: data.nome,
       telefone: data.telefone,
@@ -58,6 +66,20 @@ export class ProfissionaisService {
   async findOne(id: number): Promise<Profissional> {
     const profissional = await this.profissionalRepository.findOne({
       where: { id },
+      relations: ['usuario']
+    });
+
+    if (!profissional) {
+      throw new NotFoundException('Profissional não encontrado');
+    }
+
+    return profissional;
+  }
+
+  // 🔒 buscar profissional pelo usuário logado (para painel)
+  async findByUsuarioId(usuarioId: number): Promise<Profissional> {
+    const profissional = await this.profissionalRepository.findOne({
+      where: { usuario: { id: usuarioId } },
       relations: ['usuario']
     });
 
