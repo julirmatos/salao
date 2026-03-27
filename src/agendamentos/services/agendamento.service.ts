@@ -49,9 +49,9 @@ export class AgendamentosService {
       throw new BadRequestException('Não é possível agendar no passado');
     }
 
-    // 🚫 fora do horário (09h às 18h)
+    // 🚫 fora do horário (08h às 18h)
     const hora = inicio.getHours();
-    if (hora < 9 || hora >= 18) {
+    if (hora < 8 || hora >= 18) {
       throw new BadRequestException('Fora do horário de funcionamento');
     }
 
