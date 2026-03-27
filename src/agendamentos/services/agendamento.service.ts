@@ -26,6 +26,7 @@ export class AgendamentosService {
     private profissionalRepository: Repository<Profissional>,
   ) {}
 
+  // ➕ CREATE
   async create(data: CreateAgendamentoDto): Promise<Agendamento> {
 
     const servico = await this.servicoRepository.findOneBy({
@@ -40,11 +41,21 @@ export class AgendamentosService {
 
     if (!profissional) throw new NotFoundException('Profissional não encontrado');
 
-    // ⏱️ calcular horário fim baseado na duração do serviço
     const inicio = new Date(data.dataHora);
     const fim = new Date(inicio.getTime() + servico.duracao * 60000);
 
-    // 🚫 VERIFICAR CONFLITO DE HORÁRIO (PROFISSIONAL)
+    // 🚫 data passada
+    if (inicio < new Date()) {
+      throw new BadRequestException('Não é possível agendar no passado');
+    }
+
+    // 🚫 fora do horário (09h às 18h)
+    const hora = inicio.getHours();
+    if (hora < 9 || hora >= 18) {
+      throw new BadRequestException('Fora do horário de funcionamento');
+    }
+
+    // 🚫 conflito de horário
     const conflito = await this.agendamentoRepository
       .createQueryBuilder('agendamento')
       .where('agendamento.profissionalId = :profissionalId', {
@@ -60,7 +71,7 @@ export class AgendamentosService {
       .getOne();
 
     if (conflito) {
-      throw new BadRequestException('Horário indisponível para este profissional');
+      throw new BadRequestException('Horário indisponível');
     }
 
     const agendamento = this.agendamentoRepository.create({
@@ -75,23 +86,83 @@ export class AgendamentosService {
     return this.agendamentoRepository.save(agendamento);
   }
 
+  // 📋 LISTAR TODOS
   async findAll(): Promise<Agendamento[]> {
     return this.agendamentoRepository.find({
+      relations: ['servico', 'profissional'],
+      order: { dataHoraInicio: 'ASC' }
+    });
+  }
+
+  // 📆 AGENDA DO DIA
+  async findByDate(data: string): Promise<Agendamento[]> {
+
+    const inicioDia = new Date(`${data}T00:00:00`);
+    const fimDia = new Date(`${data}T23:59:59`);
+
+    return this.agendamentoRepository.find({
+      where: {
+        dataHoraInicio: Between(inicioDia, fimDia)
+      },
+      relations: ['servico', 'profissional'],
+      order: { dataHoraInicio: 'ASC' }
+    });
+  }
+
+  // 🔄 REMARCAR
+  async remarcar(id: number, novaData: Date): Promise<Agendamento> {
+
+    const agendamento = await this.agendamentoRepository.findOne({
+      where: { id },
       relations: ['servico', 'profissional']
     });
+
+    if (!agendamento) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
+
+    const inicio = new Date(novaData);
+    const fim = new Date(inicio.getTime() + agendamento.servico.duracao * 60000);
+
+    // mesmas validações
+    if (inicio < new Date()) {
+      throw new BadRequestException('Data inválida');
+    }
+
+    const hora = inicio.getHours();
+    if (hora < 9 || hora >= 18) {
+      throw new BadRequestException('Fora do horário');
+    }
+
+    const conflito = await this.agendamentoRepository
+      .createQueryBuilder('agendamento')
+      .where('agendamento.profissionalId = :profissionalId', {
+        profissionalId: agendamento.profissional.id
+      })
+      .andWhere('agendamento.id != :id', { id })
+      .andWhere(
+        `(agendamento.dataHoraInicio < :fim AND agendamento.dataHoraFim > :inicio)`,
+        { inicio, fim }
+      )
+      .getOne();
+
+    if (conflito) {
+      throw new BadRequestException('Horário indisponível');
+    }
+
+    agendamento.dataHoraInicio = inicio;
+    agendamento.dataHoraFim = fim;
+
+    return this.agendamentoRepository.save(agendamento);
   }
 
-  async findByProfissional(profissionalId: number) {
-    return this.agendamentoRepository.find({
-      where: { profissional: { id: profissionalId } },
-      relations: ['servico']
-    });
-  }
-
-  async cancelar(id: number) {
+  // ❌ CANCELAR
+  async cancelar(id: number): Promise<Agendamento> {
     const agendamento = await this.agendamentoRepository.findOneBy({ id });
 
-    if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
+    if (!agendamento) {
+      throw new NotFoundException('Agendamento não encontrado');
+    }
 
     agendamento.status = StatusAgendamento.CANCELADO;
 
