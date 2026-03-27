@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Usuario } from '../../usuarios/entities/usuarios.entity';
 import { Especialidade } from '../enums/especialidade.enum';
+import { Servico } from '../../servicos/entities/servicos.entity';
 
 @Entity('profissionais')
 export class Profissional {
@@ -8,10 +9,14 @@ export class Profissional {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  // 🔗 relação com usuário
-  @OneToOne(() => Usuario, usuario => usuario.profissional, { cascade: true })
+  // 🔗 relação com usuário (lado dono)
+  @OneToOne(() => Usuario, { cascade: true })
   @JoinColumn()
   usuario!: Usuario;
+
+  // 🔗 serviços do profissional
+  @OneToMany(() => Servico, (servico) => servico.profissional)
+  servicos!: Servico[];
 
   @Column({ length: 100 })
   nome!: string;
@@ -20,10 +25,11 @@ export class Profissional {
   telefone!: string;
 
   @Column({
-  type: 'enum',
-  enum: Especialidade
-})
-especialidade!: Especialidade;
+    type: 'enum',
+    enum: Especialidade
+  })
+  especialidade!: Especialidade;
+
   @Column({ nullable: true })
   foto?: string;
 }

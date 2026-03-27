@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientesModule } from './clientes/clientes.module';
 import { AuthModule } from './auth/auth.module';
 import { ProfissionaisModule } from './profissionais/profissionais.module';
+import { AdminModule } from './admin/admin.module';
+import { ServicosModule } from './servicos/servicos.module';
 
 
 
@@ -18,7 +20,7 @@ import { ProfissionaisModule } from './profissionais/profissionais.module';
       autoLoadEntities: true,
       synchronize: true,
             }),
-    AuthModule,ClientesModule,ProfissionaisModule],
+    AuthModule,ClientesModule,ProfissionaisModule,AdminModule,ServicosModule],
     controllers: [],
   providers: [],
   })
